@@ -41,7 +41,7 @@ public abstract class AbstractConfigSource implements IConfigSource
     public String get(final String key, final String defaultValue) 
     {
         final String value = get(key);
-        return (value != null) ? value : defaultValue;
+        return value != null ? value : defaultValue;
     }
 
     @Override

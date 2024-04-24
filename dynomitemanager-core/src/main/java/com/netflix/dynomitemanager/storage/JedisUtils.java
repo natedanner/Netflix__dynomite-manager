@@ -62,7 +62,7 @@ public class JedisUtils {
                  * check 1: write a SETEX key (single write) and auto-expire
                  */
                 String status = jedis.setex("ignore_dyno", 1, "dynomite");
-                if (!status.equalsIgnoreCase("OK")) {
+                if (!"OK".equalsIgnoreCase(status)) {
                     jedis.disconnect();
                     return false;
                 }

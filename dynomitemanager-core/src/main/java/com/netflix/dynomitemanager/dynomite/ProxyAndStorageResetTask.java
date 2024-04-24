@@ -47,11 +47,13 @@ public class ProxyAndStorageResetTask extends Task {
 
     private void setConsistency() {
         logger.info("Setting the consistency level for the cluster");
-        if (!DynomiteRest.sendCommand("/set_consistency/read/" + config.getDynomiteReadConsistency()))
+        if (!DynomiteRest.sendCommand("/set_consistency/read/" + config.getDynomiteReadConsistency())) {
             logger.error("REST call to Dynomite for read consistency failed --> using the default");
+        }
 
-        if (!DynomiteRest.sendCommand("/set_consistency/write/" + config.getDynomiteWriteConsistency()))
+        if (!DynomiteRest.sendCommand("/set_consistency/write/" + config.getDynomiteWriteConsistency())) {
             logger.error("REST call to Dynomite for write consistency failed --> using the default");
+        }
     }
 
     private void dynomiteCheck() {
@@ -59,10 +61,10 @@ public class ProxyAndStorageResetTask extends Task {
         logger.info("Checking Dynomite's status");
         try {
             dynomiteJedis.connect();
-            if (dynomiteJedis.ping().equals("PONG") == false) {
+            if (!"PONG".equals(dynomiteJedis.ping())) {
                 logger.warn("Pinging Dynomite failed ---> trying again after 1 sec");
                 sleeper.sleepQuietly(1000);
-                if (dynomiteJedis.ping().equals("PONG") == false) {
+                if (!"PONG".equals(dynomiteJedis.ping())) {
                     try {
                         this.dynProcess.stop();
                         sleeper.sleepQuietly(1000);

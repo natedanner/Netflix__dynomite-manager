@@ -23,9 +23,9 @@ import java.util.concurrent.CancellationException;
 
 public abstract class BoundedExponentialRetryCallable<T> extends RetryableCallable<T>
 {    
-    public final static long MAX_SLEEP = 10000;
-    public final static long MIN_SLEEP = 1000;
-    public final static int MAX_RETRIES = 10;
+    public static final long MAX_SLEEP = 10000;
+    public static final long MIN_SLEEP = 1000;
+    public static final int MAX_RETRIES = 10;
 
     private static final Logger logger = LoggerFactory.getLogger(BoundedExponentialRetryCallable.class);
     private long max;

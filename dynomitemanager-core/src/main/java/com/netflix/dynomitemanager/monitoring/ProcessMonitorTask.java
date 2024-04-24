@@ -99,7 +99,7 @@ public class ProcessMonitorTask extends Task implements StatefulJob {
         logger.info(String.format("ProcessMonitor state: %s, time elapsted to check (micros): %s",
                         instanceState, stopwatch.elapsed(MICROSECONDS)));
 
-        if((!instanceState.isStorageProxyProcessAlive())) {
+        if(!instanceState.isStorageProxyProcessAlive()) {
             if (!instanceState.isStorageAlive()) {
                 logger.error("FATAL: Redis is down.");
                 // TODO: Take appropriate action.

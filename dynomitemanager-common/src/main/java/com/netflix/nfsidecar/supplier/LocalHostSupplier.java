@@ -18,7 +18,7 @@ import com.netflix.nfsidecar.config.CassCommonConfig;
 public class LocalHostSupplier implements HostSupplier {
 
     private static final String errMsg = "DM_CASSANDRA_CLUSTER_SEEDS cannot be empty. It must contain one or more Cassandra hosts.";
-    private CassCommonConfig config;
+    private final CassCommonConfig config;
 
     @Inject
     public LocalHostSupplier(CassCommonConfig config) {
@@ -27,7 +27,7 @@ public class LocalHostSupplier implements HostSupplier {
 
     @Override
     public Supplier<List<Host>> getSupplier(String clusterName) {
-        final List<Host> hosts = new ArrayList<Host>();
+        final List<Host> hosts = new ArrayList<>();
 
         String bootCluster = config.getCassandraClusterName();
 
@@ -35,13 +35,15 @@ public class LocalHostSupplier implements HostSupplier {
 
             String seeds = System.getenv("DM_CASSANDRA_CLUSTER_SEEDS");
 
-            if (seeds == null || "".equals(seeds))
+            if (seeds == null || "".equals(seeds)) {
                 throw new RuntimeException(errMsg);
+            }
 
-            List<String> cassHostnames = new ArrayList<String>(Arrays.asList(StringUtils.split(seeds, ",")));
+            List<String> cassHostnames = new ArrayList<>(Arrays.asList(StringUtils.split(seeds, ",")));
 
-            if (cassHostnames.size() == 0)
+            if (cassHostnames.isEmpty()) {
                 throw new RuntimeException(errMsg);
+            }
 
             for (String cassHost : cassHostnames) {
                 hosts.add(new Host(cassHost, 9160));

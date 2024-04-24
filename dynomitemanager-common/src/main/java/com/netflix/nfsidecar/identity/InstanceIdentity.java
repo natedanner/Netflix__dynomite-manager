@@ -72,15 +72,15 @@ public class InstanceIdentity {
     private final Predicate<AppsInstance> differentHostPredicate = new Predicate<AppsInstance>() {
         @Override
         public boolean apply(AppsInstance instance) {
-            return (!instance.getInstanceId().equalsIgnoreCase(DUMMY_INSTANCE_ID)
-                    && !instance.getHostName().equals(myInstance.getHostName()));
+            return !instance.getInstanceId().equalsIgnoreCase(DUMMY_INSTANCE_ID)
+                    && !instance.getHostName().equals(myInstance.getHostName());
         }
     };
 
     private AppsInstance myInstance;
-    private boolean isReplace = false;
-    private boolean isTokenPregenerated = false;
-    private boolean isNewToken = false;
+    private boolean isReplace;
+    private boolean isTokenPregenerated;
+    private boolean isNewToken;
     private String replacedIp = "";
 
     @Inject
@@ -119,19 +119,22 @@ public class InstanceIdentity {
                 for (AppsInstance ins : factory.getAllIds(envVariables.getDynomiteClusterName())) {
                     logger.debug(String.format("[Alive] Iterating though the hosts: %s My id = [%s]",
                             ins.getInstanceId(), ins.getId()));
-                    if (ins.getInstanceId().equals(retriever.getInstanceId()))
+                    if (ins.getInstanceId().equals(retriever.getInstanceId())) {
                         return ins;
+                    }
                 }
                 return null;
             }
         }.call();
         // Grab a dead token
-        if (null == myInstance)
+        if (null == myInstance) {
             myInstance = new GetDeadToken().call();
+        }
 
         // Grab a pre-generated token if there is such one
-        if (null == myInstance)
+        if (null == myInstance) {
             myInstance = new GetPregeneratedToken().call();
+        }
 
         // Grab a new token
         if (null == myInstance) {
@@ -192,8 +195,9 @@ public class InstanceIdentity {
             sleeper.sleep(new Random().nextInt(5000) + 10000);
             for (AppsInstance dead : allIds) {
                 // test same dc and is it is alive.
-                if (!dead.getRack().equals(envVariables.getRack()) || asgInstances.contains(dead.getInstanceId()))
+                if (!dead.getRack().equals(envVariables.getRack()) || asgInstances.contains(dead.getInstanceId())) {
                     continue;
+                }
                 logger.info("Found dead instances: " + dead.getInstanceId());
                 // AppsInstance markAsDead = factory.create(dead.getApp() +
                 // "-dead", dead.getId(), dead.getInstanceId(),
@@ -229,8 +233,9 @@ public class InstanceIdentity {
             for (AppsInstance dead : allIds) {
                 // test same zone and is it is alive.
                 if (!dead.getRack().equals(envVariables.getRack()) || asgInstances.contains(dead.getInstanceId())
-                        || !isInstanceDummy(dead))
+                        || !isInstanceDummy(dead)) {
                     continue;
+                }
                 logger.info("Found pre-generated token: " + dead.getToken());
                 // AppsInstance markAsDead = factory.create(dead.getApp() +
                 // "-dead", dead.getId(), dead.getInstanceId(),
@@ -273,8 +278,8 @@ public class InstanceIdentity {
                 logger.info("InstanceId in ASG: " + instanceId);
             }
 
-            int my_slot = asgInstanceIds.indexOf(myInstanceId);
-            logger.info("my_slot ::: " + my_slot);
+            int mySlot = asgInstanceIds.indexOf(myInstanceId);
+            logger.info("my_slot ::: " + mySlot);
             isNewToken = true;
             int rackMembershipSize;
             if (aWSCommonConfig.isDualAccount()) {
@@ -284,12 +289,12 @@ public class InstanceIdentity {
             }
             logger.info(String.format(
                     "Trying to createToken with slot %d with rac count %d with rac membership size %d with dc %s",
-                    my_slot, commonConfig.getRacks().size(), rackMembershipSize, envVariables.getRegion()));
+                    mySlot, commonConfig.getRacks().size(), rackMembershipSize, envVariables.getRegion()));
             // String payload = tokenManager.createToken(my_slot,
             // membership.getRacCount(), membership.getRacMembershipSize(),
             // config.getDataCenter());
-            String payload = tokenManager.createToken(my_slot, rackMembershipSize, envVariables.getRack());
-            return factory.create(envVariables.getDynomiteClusterName(), my_slot + hash, retriever.getInstanceId(),
+            String payload = tokenManager.createToken(mySlot, rackMembershipSize, envVariables.getRack());
+            return factory.create(envVariables.getDynomiteClusterName(), mySlot + hash, retriever.getInstanceId(),
                     retriever.getPublicHostname(), commonConfig.getDynomitePort(), commonConfig.getDynomiteSecurePort(),
                     commonConfig.getDynomiteSecureStoragePort(), commonConfig.getDynomitePeerPort(), retriever.getPublicIP(), retriever.getRac(), null,
                     payload, envVariables.getRack());
@@ -327,7 +332,7 @@ public class InstanceIdentity {
 
     public List<String> getSeeds() throws UnknownHostException {
         // populateRacMap();
-        List<String> seeds = new LinkedList<String>();
+        List<String> seeds = new LinkedList<>();
 
         for (AppsInstance ins : factory.getAllIds(envVariables.getDynomiteClusterName())) {
             if (!ins.getInstanceId().equals(myInstance.getInstanceId())) {
@@ -342,7 +347,7 @@ public class InstanceIdentity {
 
     public List<AppsInstance> getClusterInfo() throws UnknownHostException {
 
-        List<AppsInstance> nodes = new LinkedList<AppsInstance>();
+        List<AppsInstance> nodes = new LinkedList<>();
         for (AppsInstance ins : factory.getAllIds(envVariables.getDynomiteClusterName())) {
             nodes.add(ins);
         }

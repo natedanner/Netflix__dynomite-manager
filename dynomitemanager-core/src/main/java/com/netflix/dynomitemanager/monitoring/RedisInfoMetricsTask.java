@@ -32,14 +32,14 @@ public class RedisInfoMetricsTask extends Task {
     private static final Logger Logger = LoggerFactory.getLogger(RedisInfoMetricsTask.class);
     public static final String TaskName = "Redis-Info-Task";
 
-    private static final Set<String> COUNTER_LIST = new HashSet<String>();
+    private static final Set<String> COUNTER_LIST = new HashSet<>();
 
     static {
         COUNTER_LIST.add("Redis_Stats_instantaneous_ops_per_sec");
     }
 
-    private final ConcurrentHashMap<String, LongGauge> redisInfoGaugeMetrics = new ConcurrentHashMap<String, LongGauge>();
-    private final ConcurrentHashMap<String, NumericMonitor<Number>> redisInfoCounterMap = new ConcurrentHashMap<String, NumericMonitor<Number>>();
+    private final ConcurrentHashMap<String, LongGauge> redisInfoGaugeMetrics = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, NumericMonitor<Number>> redisInfoCounterMap = new ConcurrentHashMap<>();
 
     private JedisFactory jedisFactory;
     private StorageProxy storageProxy;

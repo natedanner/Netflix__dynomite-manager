@@ -159,7 +159,7 @@ public class DynomiteAdmin {
 	@Path("/{cluster_describe : (?i)cluster_describe}")
 	public Response getClusterDescribe() {
 		try {
-			List<String> nodes = new LinkedList<String>();
+			List<String> nodes = new LinkedList<>();
 
 			for (AppsInstance ins : ii.getClusterInfo()) {
 				logger.debug("Adding node: " + ins.getInstanceId());
@@ -181,8 +181,9 @@ public class DynomiteAdmin {
 				}
 			}
 
-			if (!nodes.isEmpty())
-				return Response.ok("[" + StringUtils.join(nodes, ',') + "]").build();
+            if (!nodes.isEmpty()) {
+                return Response.ok("[" + StringUtils.join(nodes, ',') + "]").build();
+            }
 			logger.error("Cannot find the nodes");
 		} catch (Exception e) {
 			logger.error("Error while executing cluster_describe", e);

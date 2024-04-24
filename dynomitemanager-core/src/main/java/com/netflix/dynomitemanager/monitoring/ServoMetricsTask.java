@@ -57,20 +57,20 @@ public class ServoMetricsTask extends Task {
     public static final String TaskName = "Servo-Metrics-Task";
 
     // Fast Property for configuring the remote resource to talk to
-    private final DynamicStringProperty ServerMetricsUrl = DynamicPropertyFactory.getInstance()
+    private final DynamicStringProperty serverMetricsUrl = DynamicPropertyFactory.getInstance()
             .getStringProperty("florida.metrics.url", "http://localhost:22222/info");
 
     // Fast Property for configuring a gauge whitelist (if needed)
-    private final DynamicStringProperty GaugeWhitelist = DynamicPropertyFactory.getInstance()
+    private final DynamicStringProperty gaugeWhitelist = DynamicPropertyFactory.getInstance()
             .getStringProperty("florida.metrics.gauge.whitelist", "");
 
     // The gauge whitelist that is being maintained. Note that we keep a
     // reference to it that can be update dynamically
     // if the fast property is changed externally
-    private final AtomicReference<Set<String>> gaugeFilter = new AtomicReference<Set<String>>(new HashSet<String>());
+    private final AtomicReference<Set<String>> gaugeFilter = new AtomicReference<>(new HashSet<String>());
 
     // The map of servo metrics
-    private final ConcurrentHashMap<String, NumericMonitor<Number>> metricMap = new ConcurrentHashMap<String, NumericMonitor<Number>>();
+    private final ConcurrentHashMap<String, NumericMonitor<Number>> metricMap = new ConcurrentHashMap<>();
 
     private final InstanceState state;
 
@@ -81,7 +81,7 @@ public class ServoMetricsTask extends Task {
 
         initGaugeWhitelist();
 
-        GaugeWhitelist.addCallback(new Runnable() {
+        gaugeWhitelist.addCallback(new Runnable() {
 
             @Override
             public void run() {
@@ -142,30 +142,30 @@ public class ServoMetricsTask extends Task {
         try {
             client = new HttpClient();
             client.getHttpConnectionManager().getParams().setConnectionTimeout(2000);
-            get = new GetMethod(ServerMetricsUrl.get());
+            get = new GetMethod(serverMetricsUrl.get());
 
             int statusCode = client.executeMethod(get);
-            if (!(statusCode == 200)) {
-                Logger.error("Got non 200 status code from " + ServerMetricsUrl.get());
+            if (statusCode != 200) {
+                Logger.error("Got non 200 status code from " + serverMetricsUrl.get());
                 return;
             }
 
             String response = get.getResponseBodyAsString();
             if (Logger.isDebugEnabled()) {
-                Logger.debug("Received response from " + ServerMetricsUrl.get() + "\n" + response);
+                Logger.debug("Received response from " + serverMetricsUrl.get() + "\n" + response);
             }
 
             if (!response.isEmpty()) {
                 processJsonResponse(response);
             } else {
-                Logger.error("Cannot parse empty response from " + ServerMetricsUrl.get());
+                Logger.error("Cannot parse empty response from " + serverMetricsUrl.get());
             }
 
         } catch (Exception e) {
-            Logger.error("Failed to get metrics from Dynomite's REST endpoint: " + ServerMetricsUrl.get(), e);
+            Logger.error("Failed to get metrics from Dynomite's REST endpoint: " + serverMetricsUrl.get(), e);
             e.printStackTrace();
         } catch (Throwable t) {
-            Logger.error("FAILED to get metrics from Dynomite's REST endpoint: " + ServerMetricsUrl.get(), t);
+            Logger.error("FAILED to get metrics from Dynomite's REST endpoint: " + serverMetricsUrl.get(), t);
             t.printStackTrace();
         } finally {
             if (get != null) {
@@ -340,7 +340,7 @@ public class ServoMetricsTask extends Task {
     @SuppressWarnings("unchecked")
     private void initGaugeWhitelist() {
 
-        Set<String> set = new HashSet<String>();
+        Set<String> set = new HashSet<>();
         set.add("server_connections");
         set.add("client_connections");
         set.add("dnode_client_connections");
@@ -348,7 +348,7 @@ public class ServoMetricsTask extends Task {
         // set.add("client_dropped_requests");
         // set.add("alloc_msgs");
 
-        String s = GaugeWhitelist.get();
+        String s = gaugeWhitelist.get();
         if (!s.isEmpty()) {
 
             String[] parts = s.split(",");
@@ -366,10 +366,10 @@ public class ServoMetricsTask extends Task {
      * @author poberai
      *
      */
-    private class SimpleGauge implements Gauge<Number> {
+    private final class SimpleGauge implements Gauge<Number> {
 
         private final MonitorConfig mConfig;
-        private final AtomicReference<Number> value = new AtomicReference<Number>(null);
+        private final AtomicReference<Number> value = new AtomicReference<>(null);
 
         private SimpleGauge(String name, Number number) {
             mConfig = MonitorConfig.builder(name).build();

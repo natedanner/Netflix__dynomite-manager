@@ -16,8 +16,8 @@ public interface InstanceEnvIdentity {
 	 * @return true if running instance is in VPC, under a specific AWS account, false otherwise.
 	 */
 	public Boolean isNonDefaultVpc();
-	
-	public static enum InstanceEnvironent {
+
+    public enum InstanceEnvironent {
 		CLASSIC, DEFAULT_VPC, NONDEFAULT_VPC
 	};
 }

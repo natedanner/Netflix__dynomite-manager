@@ -28,7 +28,7 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor
 {
     public NamedThreadPoolExecutor(int poolSize, String poolName)
     {
-        this(poolSize, poolName, new LinkedBlockingQueue<Runnable>());
+        this(poolSize, poolName, new LinkedBlockingQueue<>());
     }
 
     public NamedThreadPoolExecutor(int poolSize, String poolName, BlockingQueue<Runnable> queue)
@@ -51,13 +51,15 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor
         {
             while (true)
             {
-                if (executor.isShutdown())
+                if (executor.isShutdown()) {
                     throw new RejectedExecutionException("ThreadPoolExecutor has shut down");
+                }
 
                 try
                 {
-                    if (queue.offer(task, 1000, TimeUnit.MILLISECONDS))
+                    if (queue.offer(task, 1000, TimeUnit.MILLISECONDS)) {
                         break;
+                    }
                 }
                 catch (InterruptedException e)
                 {

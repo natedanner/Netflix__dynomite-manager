@@ -38,7 +38,7 @@ public class StorageProcessManager {
     }
     
     protected void setStorageEnv(Map<String, String> env) {
-	 env.put("FLORIDA_STORAGE", String.valueOf(this.storageProxy.getEngine()));
+	 env.put("FLORIDA_STORAGE", this.storageProxy.getEngine());
     }
 
     /**
@@ -95,10 +95,11 @@ public class StorageProcessManager {
      * @return
      */
     private List<String> getStartCommand() {
-	List<String> startCmd = new LinkedList<String>();
+	List<String> startCmd = new LinkedList<>();
 	for (String param : storageProxy.getStartupScript().split(" ")) {
-	    if (StringUtils.isNotBlank(param))
-		startCmd.add(param);
+        if (StringUtils.isNotBlank(param)) {
+            startCmd.add(param);
+        }
 	}
 	return startCmd;
     }
@@ -108,10 +109,11 @@ public class StorageProcessManager {
      * @return
      */
     private List<String> getStopCommand() {
-	List<String> stopCmd = new LinkedList<String>();
+	List<String> stopCmd = new LinkedList<>();
 	for (String param : storageProxy.getStopScript().split(" ")) {
-	    if (StringUtils.isNotBlank(param))
-		stopCmd.add(param);
+        if (StringUtils.isNotBlank(param)) {
+            stopCmd.add(param);
+        }
 	}
 	return stopCmd;
     }
@@ -131,8 +133,9 @@ public class StorageProcessManager {
 	final byte[] buffer = new byte[512];
 	final ByteArrayOutputStream baos = new ByteArrayOutputStream(buffer.length);
 	int cnt;
-	while ((cnt = inputStream.read(buffer)) != -1)
-	    baos.write(buffer, 0, cnt);
+        while ((cnt = inputStream.read(buffer)) != -1) {
+            baos.write(buffer, 0, cnt);
+        }
 	return baos.toString();
     }
 

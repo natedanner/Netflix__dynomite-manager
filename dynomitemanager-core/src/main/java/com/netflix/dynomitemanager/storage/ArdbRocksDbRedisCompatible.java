@@ -34,19 +34,19 @@ import com.netflix.dynomitemanager.config.FloridaConfig;
 
 public class ArdbRocksDbRedisCompatible {
 
-    final static String DYNO_ARDB = "ardb-rocksdb";
-    final static String DYNO_ARDB_CONF_PATH = "/apps/ardb/conf/rocksdb.conf";
-    final static String ARDB_ROCKSDB_START_SCRIPT = "/apps/ardb/bin/launch_ardb.sh";
-    final static String ARDB_ROCKSDB_STOP_SCRIPT = "/apps/ardb/bin/kill_ardb.sh";
+    static final String DYNO_ARDB = "ardb-rocksdb";
+    static final String DYNO_ARDB_CONF_PATH = "/apps/ardb/conf/rocksdb.conf";
+    static final String ARDB_ROCKSDB_START_SCRIPT = "/apps/ardb/bin/launch_ardb.sh";
+    static final String ARDB_ROCKSDB_STOP_SCRIPT = "/apps/ardb/bin/kill_ardb.sh";
 
     private static final Logger logger = LoggerFactory.getLogger(ArdbRocksDbRedisCompatible.class);
 
     private int writeBufferSize;
     private int maxWriteBufferNumber;
-    private int minWriteBufferToMerge;
-    private long storeMaxMem;
-    private String loglevel;
-    private String compactionStrategy;
+    private final int minWriteBufferToMerge;
+    private final long storeMaxMem;
+    private final String loglevel;
+    private final String compactionStrategy;
 
     public ArdbRocksDbRedisCompatible(long storeMaxMem, FloridaConfig config) {
 
@@ -72,7 +72,7 @@ public class ArdbRocksDbRedisCompatible {
 
     }
 
-    private String ConvertRocksDBOptions(String rocksDBOptions) {
+    private String convertRocksDBOptions(String rocksDBOptions) {
         // split the arguments based on the ";"
         String[] allOptions = rocksDBOptions.split(";");
 
@@ -104,8 +104,9 @@ public class ArdbRocksDbRedisCompatible {
                 }
                 pr = pr + "\\";
                 newProperties.append(pr);
-            } else
+            } else {
                 newProperties.append(pr + ";");
+            }
             logger.info("Appending Property: '" + pr + "'");
         }
         return newProperties.toString();
@@ -157,7 +158,7 @@ public class ArdbRocksDbRedisCompatible {
         List<String> lines = Files.readAllLines(confPath, Charsets.UTF_8);
 
         // Create a new list to write back the file.
-        List<String> newLines = new ArrayList<String>();
+        List<String> newLines = new ArrayList<>();
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
@@ -184,14 +185,14 @@ public class ArdbRocksDbRedisCompatible {
                 logger.info("RocksDB options");
                 rocksParse = true;
                 String[] keyValue = line.split("\\s+");
-                newLines.add(keyValue[0] + spaces(15) + ConvertRocksDBOptions(keyValue[1]));
+                newLines.add(keyValue[0] + spaces(15) + convertRocksDBOptions(keyValue[1]));
                 continue;
             } else if (rocksParse) {
                 // we need this for multi-line options parsing
                 if (!line.contains("\\")) {
                     rocksParse = false;
                 }
-                newLines.add(ConvertRocksDBOptions(line));
+                newLines.add(convertRocksDBOptions(line));
                 continue;
             } else {
                 newLines.add(line);

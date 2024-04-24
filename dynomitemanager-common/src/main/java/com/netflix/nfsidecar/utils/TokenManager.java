@@ -85,8 +85,9 @@ public class TokenManager implements ITokenManager
         {
             int i = Math.abs(index) - 1;
             if ((i >= sortedTokens.size()) || (i > 0 && sortedTokens.get(i).subtract(tokenToSearch)
-                    .compareTo(tokenToSearch.subtract(sortedTokens.get(i - 1))) > 0))
+                    .compareTo(tokenToSearch.subtract(sortedTokens.get(i - 1))) > 0)) {
                 --i;
+            }
             return sortedTokens.get(i);
         }
         return sortedTokens.get(index);
@@ -105,8 +106,9 @@ public class TokenManager implements ITokenManager
     
     private String reverse(String s)
     {
-    	if (s == null)
-    		return null;
+        if (s == null) {
+            return null;
+        }
     	
     	StringBuilder sb = new StringBuilder();
     	for(int i=s.length()-1; i>=0; i--) {

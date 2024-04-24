@@ -36,33 +36,33 @@ import org.slf4j.LoggerFactory;
 public class InstanceDataDAOCassandra {
     private static final Logger logger = LoggerFactory.getLogger(InstanceDataDAOCassandra.class);
 
-    private String CN_ID = "Id";
-    private String CN_APPID = "appId";
-    private String CN_AZ = "availabilityZone";
-    private String CN_DC = "datacenter";
-    private String CN_INSTANCEID = "instanceId";
-    private String CN_HOSTNAME = "hostname";
-    private String CN_DYNOMITE_PORT = "dynomitePort";
-    private String CN_DYNOMITE_SECURE_PORT = "dynomiteSecurePort";
-    private String CN_DYNOMITE_SECURE_STORAGE_PORT = "dynomiteSecureStoragePort";
-    private String CN_PEER_PORT = "peerPort";
-    private String CN_EIP = "elasticIP";
-    private String CN_TOKEN = "token";
-    private String CN_LOCATION = "location";
-    private String CN_VOLUME_PREFIX = "ssVolumes";
-    private String CN_UPDATETIME = "updatetime";
-    private String CF_NAME_TOKENS = "tokens";
-    private String CF_NAME_LOCKS = "locks";
+    private String cnId = "Id";
+    private String cnAppid = "appId";
+    private String cnAz = "availabilityZone";
+    private String cnDc = "datacenter";
+    private String cnInstanceid = "instanceId";
+    private String cnHostname = "hostname";
+    private String cnDynomitePort = "dynomitePort";
+    private String cnDynomiteSecurePort = "dynomiteSecurePort";
+    private String cnDynomiteSecureStoragePort = "dynomiteSecureStoragePort";
+    private String cnPeerPort = "peerPort";
+    private String cnEip = "elasticIP";
+    private String cnToken = "token";
+    private String cnLocation = "location";
+    private String cnVolumePrefix = "ssVolumes";
+    private String cnUpdatetime = "updatetime";
+    private String cfNameTokens = "tokens";
+    private String cfNameLocks = "locks";
 
     private final Keyspace bootKeyspace;
     private final CommonConfig commonConfig;
     private final CassCommonConfig cassCommonConfig;
     private final HostSupplier hostSupplier;
-    private final String BOOT_CLUSTER;
-    private final String KS_NAME;
+    private final String bootCluster;
+    private final String ksName;
     private final int thriftPortForAstyanax;
     private final AstyanaxContext<Keyspace> ctx;
-    private long lastTimeCassandraPull = 0;
+    private long lastTimeCassandraPull;
     private Set<AppsInstance> appInstances;
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final Lock read  = readWriteLock.readLock();
@@ -78,10 +78,10 @@ public class InstanceDataDAOCassandra {
      * UTF8Type}, {column_name: updatetime, validation_class: TimeUUIDType},
      * {column_name: location, validation_class: UTF8Type}];
      */
-    public ColumnFamily<String, String> CF_TOKENS = new ColumnFamily<String, String>(CF_NAME_TOKENS,
+    public ColumnFamily<String, String> CF_TOKENS = new ColumnFamily<>(cfNameTokens,
             StringSerializer.get(), StringSerializer.get());
     // Schema: create column family locks with comparator=UTF8Type;
-    public ColumnFamily<String, String> CF_LOCKS = new ColumnFamily<String, String>(CF_NAME_LOCKS,
+    public ColumnFamily<String, String> CF_LOCKS = new ColumnFamily<>(cfNameLocks,
             StringSerializer.get(), StringSerializer.get());
 
     @Inject
@@ -89,37 +89,39 @@ public class InstanceDataDAOCassandra {
         this.cassCommonConfig = cassCommonConfig;
         this.commonConfig = commonConfig;
 
-        BOOT_CLUSTER = cassCommonConfig.getCassandraClusterName();
+        bootCluster = cassCommonConfig.getCassandraClusterName();
 
-        if (BOOT_CLUSTER == null || BOOT_CLUSTER.isEmpty())
+        if (bootCluster == null || bootCluster.isEmpty()) {
             throw new RuntimeException(
                     "Cassandra cluster name cannot be blank. Please use getCassandraClusterName() property.");
+        }
 
-        KS_NAME = cassCommonConfig.getCassandraKeyspaceName();
+        ksName = cassCommonConfig.getCassandraKeyspaceName();
 
-        if (KS_NAME == null || KS_NAME.isEmpty())
+        if (ksName == null || ksName.isEmpty()) {
             throw new RuntimeException(
                     "Cassandra Keyspace can not be blank. Please use getCassandraKeyspaceName() property.");
+        }
 
         thriftPortForAstyanax = cassCommonConfig.getCassandraThriftPort();
-        if (thriftPortForAstyanax <= 0)
+        if (thriftPortForAstyanax <= 0) {
             throw new RuntimeException(
                     "Thrift Port for Astyanax can not be blank. Please use getCassandraThriftPort() property.");
+        }
 
         this.hostSupplier = hostSupplier;
 
-        if (cassCommonConfig.isEurekaHostsSupplierEnabled())
+        if (cassCommonConfig.isEurekaHostsSupplierEnabled()) {
             ctx = initWithThriftDriverWithEurekaHostsSupplier();
-        else
+        } else {
             ctx = initWithThriftDriverWithExternalHostsSupplier();
+        }
 
         ctx.start();
         bootKeyspace = ctx.getClient();
     }
     private boolean isCassandraCacheExpired() {
-        if (lastTimeCassandraPull + cassCommonConfig.getTokenRefreshInterval() <= System.currentTimeMillis())
-            return true;
-        return false;
+        return lastTimeCassandraPull + cassCommonConfig.getTokenRefreshInterval() <= System.currentTimeMillis();
     }
 
     public void createInstanceEntry(AppsInstance instance) throws Exception {
@@ -136,24 +138,24 @@ public class InstanceDataDAOCassandra {
         try {
             MutationBatch m = bootKeyspace.prepareMutationBatch();
             ColumnListMutation<String> clm = m.withRow(CF_TOKENS, key);
-            clm.putColumn(CN_ID, Integer.toString(instance.getId()), null);
-            clm.putColumn(CN_APPID, instance.getApp(), null);
-            clm.putColumn(CN_AZ, instance.getZone(), null);
-            clm.putColumn(CN_DC, commonConfig.getRack(), null);
-            clm.putColumn(CN_INSTANCEID, instance.getInstanceId(), null);
-            clm.putColumn(CN_HOSTNAME, instance.getHostName(), null);
-            clm.putColumn(CN_DYNOMITE_PORT, Integer.toString(instance.getDynomitePort()), null);
-            clm.putColumn(CN_DYNOMITE_SECURE_PORT, Integer.toString(instance.getDynomiteSecurePort()), null);
-            clm.putColumn(CN_DYNOMITE_SECURE_STORAGE_PORT, Integer.toString(instance.getDynomiteSecureStoragePort()), null);
-            clm.putColumn(CN_PEER_PORT, Integer.toString(instance.getPeerPort()), null);
-            clm.putColumn(CN_EIP, instance.getHostIP(), null);
-            clm.putColumn(CN_TOKEN, instance.getToken(), null);
-            clm.putColumn(CN_LOCATION, instance.getDatacenter(), null);
-            clm.putColumn(CN_UPDATETIME, TimeUUIDUtils.getUniqueTimeUUIDinMicros(), null);
+            clm.putColumn(cnId, Integer.toString(instance.getId()), null);
+            clm.putColumn(cnAppid, instance.getApp(), null);
+            clm.putColumn(cnAz, instance.getZone(), null);
+            clm.putColumn(cnDc, commonConfig.getRack(), null);
+            clm.putColumn(cnInstanceid, instance.getInstanceId(), null);
+            clm.putColumn(cnHostname, instance.getHostName(), null);
+            clm.putColumn(cnDynomitePort, Integer.toString(instance.getDynomitePort()), null);
+            clm.putColumn(cnDynomiteSecurePort, Integer.toString(instance.getDynomiteSecurePort()), null);
+            clm.putColumn(cnDynomiteSecureStoragePort, Integer.toString(instance.getDynomiteSecureStoragePort()), null);
+            clm.putColumn(cnPeerPort, Integer.toString(instance.getPeerPort()), null);
+            clm.putColumn(cnEip, instance.getHostIP(), null);
+            clm.putColumn(cnToken, instance.getToken(), null);
+            clm.putColumn(cnLocation, instance.getDatacenter(), null);
+            clm.putColumn(cnUpdatetime, TimeUUIDUtils.getUniqueTimeUUIDinMicros(), null);
             Map<String, Object> volumes = instance.getVolumes();
             if (volumes != null) {
                 for (String path : volumes.keySet()) {
-                    clm.putColumn(CN_VOLUME_PREFIX + "_" + path, volumes.get(path).toString(), null);
+                    clm.putColumn(cnVolumePrefix + "_" + path, volumes.get(path).toString(), null);
                 }
             }
             m.execute();
@@ -177,7 +179,7 @@ public class InstanceDataDAOCassandra {
         ColumnListMutation<String> clm = m.withRow(CF_LOCKS, choosingkey);
 
         // Expire in 6 sec
-        clm.putColumn(instance.getInstanceId(), instance.getInstanceId(), new Integer(6));
+        clm.putColumn(instance.getInstanceId(), instance.getInstanceId(), Integer.valueOf(6));
         m.execute();
         int count = bootKeyspace.prepareQuery(CF_LOCKS).getKey(choosingkey).getCount().execute().getResult();
         if (count > 1) {
@@ -190,11 +192,12 @@ public class InstanceDataDAOCassandra {
         String lockKey = getLockingKey(instance);
         OperationResult<ColumnList<String>> result = bootKeyspace.prepareQuery(CF_LOCKS).getKey(lockKey).execute();
         if (result.getResult().size() > 0
-                && !result.getResult().getColumnByIndex(0).getName().equals(instance.getInstanceId()))
+                && !result.getResult().getColumnByIndex(0).getName().equals(instance.getInstanceId())) {
             throw new Exception(String.format("Lock already taken %s", lockKey));
+        }
 
         clm = m.withRow(CF_LOCKS, lockKey);
-        clm.putColumn(instance.getInstanceId(), instance.getInstanceId(), new Integer(600));
+        clm.putColumn(instance.getInstanceId(), instance.getInstanceId(), Integer.valueOf(600));
         m.execute();
         Thread.sleep(100);
         result = bootKeyspace.prepareQuery(CF_LOCKS).getKey(lockKey).execute();
@@ -202,8 +205,9 @@ public class InstanceDataDAOCassandra {
                 && result.getResult().getColumnByIndex(0).getName().equals(instance.getInstanceId())) {
             logger.info("Got lock " + lockKey);
             return;
-        } else
+        } else {
             throw new Exception(String.format("Cannot insert lock %s", lockKey));
+        }
 
     }
 
@@ -223,9 +227,10 @@ public class InstanceDataDAOCassandra {
         // Delete the row
         String key = findKey(instance.getApp(), String.valueOf(instance.getId()), instance.getDatacenter(),
                 instance.getRack());
-        if (key == null)
+        if (key == null) {
             return; // don't fail it
 
+        }
         MutationBatch m = bootKeyspace.prepareMutationBatch();
         m.withRow(CF_TOKENS, key).delete();
         m.execute();
@@ -248,35 +253,37 @@ public class InstanceDataDAOCassandra {
     public AppsInstance getInstance(String app, String rack, int id) {
         Set<AppsInstance> set = getAllInstances(app);
         for (AppsInstance ins : set) {
-            if (ins.getId() == id && ins.getRack().equals(rack))
+            if (ins.getId() == id && ins.getRack().equals(rack)) {
                 return ins;
+            }
         }
         return null;
     }
 
     public Set<AppsInstance> getLocalDCInstances(String app, String region) {
         Set<AppsInstance> set = getAllInstances(app);
-        Set<AppsInstance> returnSet = new HashSet<AppsInstance>();
+        Set<AppsInstance> returnSet = new HashSet<>();
 
         for (AppsInstance ins : set) {
-            if (ins.getDatacenter().equals(region))
+            if (ins.getDatacenter().equals(region)) {
                 returnSet.add(ins);
+            }
         }
         return returnSet;
     }
 
     public Set<AppsInstance> getAllInstancesFromCassandra(String app) {
-        Set<AppsInstance> set = new HashSet<AppsInstance>();
+        Set<AppsInstance> set = new HashSet<>();
         try {
 
             final String selectClause = String.format(
-                    "SELECT * FROM %s USING CONSISTENCY LOCAL_QUORUM WHERE %s = '%s' ", CF_NAME_TOKENS, CN_APPID, app);
+                    "SELECT * FROM %s USING CONSISTENCY LOCAL_QUORUM WHERE %s = '%s' ", cfNameTokens, cnAppid, app);
             logger.debug(selectClause);
 
-            final ColumnFamily<String, String> CF_TOKENS_NEW = ColumnFamily.newColumnFamily(KS_NAME,
+            final ColumnFamily<String, String> cfTokensNew = ColumnFamily.newColumnFamily(ksName,
                     StringSerializer.get(), StringSerializer.get());
 
-            OperationResult<CqlResult<String, String>> result = bootKeyspace.prepareQuery(CF_TOKENS_NEW)
+            OperationResult<CqlResult<String, String>> result = bootKeyspace.prepareQuery(cfTokensNew)
                     .withCql(selectClause).execute();
 
             for (Row<String, String> row : result.getResult().getRows())
@@ -308,17 +315,18 @@ public class InstanceDataDAOCassandra {
         try {
             final String selectClause = String.format(
                     "SELECT * FROM %s USING CONSISTENCY LOCAL_QUORUM WHERE %s = '%s' and %s = '%s' and %s = '%s' and %s = '%s' ",
-                    "tokens", CN_APPID, app, CN_ID, id, CN_LOCATION, location, CN_DC, datacenter);
+                    "tokens", cnAppid, app, cnId, id, cnLocation, location, cnDc, datacenter);
             logger.info(selectClause);
 
-            final ColumnFamily<String, String> CF_INSTANCES_NEW = ColumnFamily.newColumnFamily(KS_NAME,
+            final ColumnFamily<String, String> cfInstancesNew = ColumnFamily.newColumnFamily(ksName,
                     StringSerializer.get(), StringSerializer.get());
 
-            OperationResult<CqlResult<String, String>> result = bootKeyspace.prepareQuery(CF_INSTANCES_NEW)
+            OperationResult<CqlResult<String, String>> result = bootKeyspace.prepareQuery(cfInstancesNew)
                     .withCql(selectClause).execute();
 
-            if (result == null || result.getResult().getRows().size() == 0)
+            if (result == null || result.getResult().getRows().size() == 0) {
                 return null;
+            }
 
             Row<String, String> row = result.getResult().getRows().getRowByIndex(0);
             return row.getKey();
@@ -333,28 +341,29 @@ public class InstanceDataDAOCassandra {
 
     private AppsInstance transform(ColumnList<String> columns) {
         AppsInstance ins = new AppsInstance();
-        Map<String, String> cmap = new HashMap<String, String>();
+        Map<String, String> cmap = new HashMap<>();
         for (Column<String> column : columns) {
             // logger.info("***Column Name = "+column.getName()+ " Value =
             // "+column.getStringValue());
             cmap.put(column.getName(), column.getStringValue());
-            if (column.getName().equals(CN_APPID))
+            if (column.getName().equals(cnAppid)) {
                 ins.setUpdatetime(column.getTimestamp());
+            }
         }
 
-        ins.setApp(cmap.get(CN_APPID));
-        ins.setZone(cmap.get(CN_AZ));
-        ins.setHost(cmap.get(CN_HOSTNAME));
-        ins.setDynomitePort((cmap.get(CN_DYNOMITE_PORT) != null) ? Integer.parseInt(cmap.get(CN_DYNOMITE_PORT)) : commonConfig.getDynomitePort());
-        ins.setDynomiteSecurePort((cmap.get(CN_DYNOMITE_SECURE_PORT) != null) ? Integer.parseInt(cmap.get(CN_DYNOMITE_SECURE_PORT)) : commonConfig.getDynomiteSecurePort());
-        ins.setDynomiteSecureStoragePort((cmap.get(CN_DYNOMITE_SECURE_STORAGE_PORT) != null) ? Integer.parseInt(cmap.get(CN_DYNOMITE_SECURE_STORAGE_PORT)) : commonConfig.getDynomiteSecureStoragePort());
-        ins.setPeerPort((cmap.get(CN_PEER_PORT) != null) ? Integer.parseInt(cmap.get(CN_PEER_PORT)) : commonConfig.getDynomitePeerPort());
-        ins.setHostIP(cmap.get(CN_EIP));
-        ins.setId(Integer.parseInt(cmap.get(CN_ID)));
-        ins.setInstanceId(cmap.get(CN_INSTANCEID));
-        ins.setDatacenter(cmap.get(CN_LOCATION));
-        ins.setRack(cmap.get(CN_DC));
-        ins.setToken(cmap.get(CN_TOKEN));
+        ins.setApp(cmap.get(cnAppid));
+        ins.setZone(cmap.get(cnAz));
+        ins.setHost(cmap.get(cnHostname));
+        ins.setDynomitePort(cmap.get(cnDynomitePort) != null ? Integer.parseInt(cmap.get(cnDynomitePort)) : commonConfig.getDynomitePort());
+        ins.setDynomiteSecurePort(cmap.get(cnDynomiteSecurePort) != null ? Integer.parseInt(cmap.get(cnDynomiteSecurePort)) : commonConfig.getDynomiteSecurePort());
+        ins.setDynomiteSecureStoragePort(cmap.get(cnDynomiteSecureStoragePort) != null ? Integer.parseInt(cmap.get(cnDynomiteSecureStoragePort)) : commonConfig.getDynomiteSecureStoragePort());
+        ins.setPeerPort(cmap.get(cnPeerPort) != null ? Integer.parseInt(cmap.get(cnPeerPort)) : commonConfig.getDynomitePeerPort());
+        ins.setHostIP(cmap.get(cnEip));
+        ins.setId(Integer.parseInt(cmap.get(cnId)));
+        ins.setInstanceId(cmap.get(cnInstanceid));
+        ins.setDatacenter(cmap.get(cnLocation));
+        ins.setRack(cmap.get(cnDc));
+        ins.setToken(cmap.get(cnToken));
         return ins;
     }
 
@@ -372,13 +381,13 @@ public class InstanceDataDAOCassandra {
 
     private AstyanaxContext<Keyspace> initWithThriftDriverWithEurekaHostsSupplier() {
 
-        logger.info("BOOT_CLUSTER = {}, KS_NAME = {}", BOOT_CLUSTER, KS_NAME);
-        return new AstyanaxContext.Builder().forCluster(BOOT_CLUSTER).forKeyspace(KS_NAME)
+        logger.info("BOOT_CLUSTER = {}, KS_NAME = {}", bootCluster, ksName);
+        return new AstyanaxContext.Builder().forCluster(bootCluster).forKeyspace(ksName)
                 .withAstyanaxConfiguration(
                         new AstyanaxConfigurationImpl().setDiscoveryType(NodeDiscoveryType.DISCOVERY_SERVICE))
                 .withConnectionPoolConfiguration(new ConnectionPoolConfigurationImpl("MyConnectionPool")
                         .setMaxConnsPerHost(3).setPort(thriftPortForAstyanax))
-                .withHostSupplier(hostSupplier.getSupplier(BOOT_CLUSTER))
+                .withHostSupplier(hostSupplier.getSupplier(bootCluster))
                 .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
                 .buildKeyspace(ThriftFamilyFactory.getInstance());
 
@@ -386,8 +395,8 @@ public class InstanceDataDAOCassandra {
 
     private AstyanaxContext<Keyspace> initWithThriftDriverWithExternalHostsSupplier() {
 
-        logger.info("BOOT_CLUSTER = {}, KS_NAME = {}", BOOT_CLUSTER, KS_NAME);
-        return new AstyanaxContext.Builder().forCluster(BOOT_CLUSTER).forKeyspace(KS_NAME)
+        logger.info("BOOT_CLUSTER = {}, KS_NAME = {}", bootCluster, ksName);
+        return new AstyanaxContext.Builder().forCluster(bootCluster).forKeyspace(ksName)
                 .withAstyanaxConfiguration(
                         new AstyanaxConfigurationImpl().setDiscoveryType(NodeDiscoveryType.DISCOVERY_SERVICE)
                                 .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
@@ -405,14 +414,15 @@ public class InstanceDataDAOCassandra {
             @Override
             public List<Host> get() {
 
-                List<Host> hosts = new ArrayList<Host>();
+                List<Host> hosts = new ArrayList<>();
 
-                List<String> cassHostnames = new ArrayList<String>(
+                List<String> cassHostnames = new ArrayList<>(
                         Arrays.asList(StringUtils.split(cassCommonConfig.getCassandraSeeds(), ",")));
 
-                if (cassHostnames.size() == 0)
+                if (cassHostnames.isEmpty()) {
                     throw new RuntimeException(
                             "Cassandra Host Names can not be blank. At least one host is needed. Please use getCassandraSeeds() property.");
+                }
 
                 for (String cassHost : cassHostnames) {
                     logger.info("Adding Cassandra Host = {}", cassHost);

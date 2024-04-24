@@ -48,8 +48,9 @@ public class VpcInstanceDataRetriever implements InstanceDataRetriever {
      */
     public String getVpcId() {
         String nacId = getMac();
-        if (nacId == null || nacId.isEmpty())
+        if (nacId == null || nacId.isEmpty()) {
             return null;
+        }
 
         String vpcId = null;
         try {

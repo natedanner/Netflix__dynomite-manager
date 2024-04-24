@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class RedisInfoParser {
 
-    private static final Set<String> WHITE_LIST = new HashSet<String>();
+    private static final Set<String> WHITE_LIST = new HashSet<>();
 
     static {
 	WHITE_LIST.add("uptime_in_seconds");
@@ -59,17 +59,17 @@ public class RedisInfoParser {
 
     public Map<String, Long> parse(Reader inReader) throws Exception {
 
-	final Map<String, Long> metrics = new HashMap<String, Long>();
+	final Map<String, Long> metrics = new HashMap<>();
 	BufferedReader reader = null;
 
 	try {
 	    reader = new BufferedReader(inReader);
 
-	    List<StatsSection> sections = new ArrayList<StatsSection>();
+	    List<StatsSection> sections = new ArrayList<>();
 
 	    boolean stop = false;
 	    while (!stop) {
-		StatsSection section = new StatsSection(reader, RuleIter);
+		StatsSection section = new StatsSection(reader, ruleIter);
 		section.initSection();
 
 		if (section.isEmpty()) {
@@ -99,14 +99,14 @@ public class RedisInfoParser {
 	return metrics;
     }
 
-    private class StatsSection {
+    private final class StatsSection {
 
 	private final BufferedReader reader;
 
 	private String sectionName;
 	private String sectionNamePrefix = "Redis_";
 
-	private final Map<String, Long> data = new HashMap<String, Long>();
+	private final Map<String, Long> data = new HashMap<>();
 	private final SectionRule sectionRule;
 
 	private StatsSection(BufferedReader br, SectionRule rule) {
@@ -124,9 +124,7 @@ public class RedisInfoParser {
 
 	    while ((line = reader.readLine()) != null) {
 		line = line.trim();
-		if (!line.startsWith("#")) {
-		    continue;
-		} else {
+		if (line.startsWith("#")) {
 		    break;
 		}
 	    }
@@ -168,9 +166,10 @@ public class RedisInfoParser {
 	    String name = parts[0];
 	    String sVal = parts[1];
 
-	    // while list filtering
-	    if (!WHITE_LIST.contains(name))
-		return;
+        // while list filtering
+        if (!WHITE_LIST.contains(name)) {
+            return;
+        }
 
 	    if (sVal.endsWith("M")) {
 		sVal = sVal.substring(0, sVal.length() - 1);
@@ -196,7 +195,7 @@ public class RedisInfoParser {
 
 	private Map<String, Long> getMetrics() {
 
-	    Map<String, Long> map = new HashMap<String, Long>();
+	    Map<String, Long> map = new HashMap<>();
 	    for (String key : data.keySet()) {
 		map.put(sectionNamePrefix + key, data.get(key));
 	    }
@@ -209,111 +208,111 @@ public class RedisInfoParser {
 	boolean processSection(StatsSection section, String key, String value);
     }
 
-    private SectionRule Rule0 = new SectionRule() {
+    private final SectionRule rule0 = new SectionRule() {
 
-	@Override
-	public boolean processSection(StatsSection section, String key, String value) {
+        @Override
+        public boolean processSection(StatsSection section, String key, String value) {
 
-	    if (section.sectionName.equals("Server")) {
-		if (key.equals("uptime_in_seconds")) {
-		    try {
-			Double dVal = Double.parseDouble(value);
-			section.data.put(key, dVal.longValue());
-			return true;
-		    } catch (NumberFormatException e) {
-		    }
-		}
-	    }
-	    return false;
-	}
-
-    };
-
-    private SectionRule Rule1 = new SectionRule() {
-
-	@Override
-	public boolean processSection(StatsSection section, String key, String value) {
-
-	    if (section.sectionName.equals("Memory")) {
-		if (key.equals("mem_fragmentation_ratio")) {
-		    try {
-			Double dVal = Double.parseDouble(value);
-			dVal = dVal * 100;
-			section.data.put(key, dVal.longValue());
-			return true;
-		    } catch (NumberFormatException e) {
-		    }
-		}
-	    }
-	    return false;
-	}
+            if ("Server".equals(section.sectionName)) {
+                if ("uptime_in_seconds".equals(key)) {
+                    try {
+                        Double dVal = Double.parseDouble(value);
+                        section.data.put(key, dVal.longValue());
+                        return true;
+                    } catch (NumberFormatException e) {
+                    }
+                }
+            }
+            return false;
+        }
 
     };
 
-    private SectionRule Rule2 = new SectionRule() {
+    private final SectionRule rule1 = new SectionRule() {
 
-	@Override
-	public boolean processSection(StatsSection section, String key, String value) {
+        @Override
+        public boolean processSection(StatsSection section, String key, String value) {
 
-	    if (section.sectionName.equals("Persistence")) {
-		if (key.equals("rdb_last_bgsave_status") || key.equals("aof_last_bgrewrite_status")
-			|| key.equals("aof_last_write_status")) {
-		    Long val = value.equalsIgnoreCase("ok") ? 1L : 0L;
-		    section.data.put(key, val);
-		    return true;
-		}
-	    }
-	    return false;
-	}
+            if ("Memory".equals(section.sectionName)) {
+                if ("mem_fragmentation_ratio".equals(key)) {
+                    try {
+                        Double dVal = Double.parseDouble(value);
+                        dVal = dVal * 100;
+                        section.data.put(key, dVal.longValue());
+                        return true;
+                    } catch (NumberFormatException e) {
+                    }
+                }
+            }
+            return false;
+        }
 
     };
 
-    private SectionRule Rule3 = new SectionRule() {
+    private final SectionRule rule2 = new SectionRule() {
 
-	@Override
-	public boolean processSection(StatsSection section, String key, String value) {
+        @Override
+        public boolean processSection(StatsSection section, String key, String value) {
 
-	    if (section.sectionName.equals("Keyspace")) {
-		if (key.equals("db0")) {
-		    String[] parts = value.split(",");
-		    for (String part : parts) {
-			addPart(key, part, section);
-		    }
-		    return true;
-		}
-	    }
-	    return false;
-	}
+            if ("Persistence".equals(section.sectionName)) {
+                if ("rdb_last_bgsave_status".equals(key) || "aof_last_bgrewrite_status".equals(key)
+                        || "aof_last_write_status".equals(key)) {
+                    Long val = "ok".equalsIgnoreCase(value) ? 1L : 0L;
+                    section.data.put(key, val);
+                    return true;
+                }
+            }
+            return false;
+        }
 
-	private void addPart(String parentKey, String keyVal, StatsSection section) {
-	    String[] parts = keyVal.split("=");
-	    if (parts.length != 2) {
-		return;
-	    }
-	    try {
-		String key = parentKey + "_" + parts[0];
-		Double dVal = Double.parseDouble(parts[1]);
-		section.data.put(key, dVal.longValue());
-	    } catch (NumberFormatException e) {
-		// ignore
-	    }
-	}
     };
 
-    private SectionRule RuleIter = new SectionRule() {
+    private final SectionRule rule3 = new SectionRule() {
 
-	SectionRule[] arr = { Rule0, Rule1, Rule2, Rule3 };
-	final List<SectionRule> rules = Arrays.asList(arr);
+        @Override
+        public boolean processSection(StatsSection section, String key, String value) {
 
-	@Override
-	public boolean processSection(StatsSection section, String key, String value) {
+            if ("Keyspace".equals(section.sectionName)) {
+                if ("db0".equals(key)) {
+                    String[] parts = value.split(",");
+                    for (String part : parts) {
+                        addPart(key, part, section);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
 
-	    for (SectionRule rule : rules) {
-		if (rule.processSection(section, key, value)) {
-		    return true;
-		}
-	    }
-	    return false;
-	}
+        private void addPart(String parentKey, String keyVal, StatsSection section) {
+            String[] parts = keyVal.split("=");
+            if (parts.length != 2) {
+                return;
+            }
+            try {
+                String key = parentKey + "_" + parts[0];
+                Double dVal = Double.parseDouble(parts[1]);
+                section.data.put(key, dVal.longValue());
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+    };
+
+    private final SectionRule ruleIter = new SectionRule() {
+
+        SectionRule[] arr = {rule0, rule1, rule2, rule3};
+        final List<SectionRule> rules = Arrays.asList(arr);
+
+        @Override
+        public boolean processSection(StatsSection section, String key, String value) {
+
+            for (SectionRule rule : rules) {
+                if (rule.processSection(section, key, value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     };
 }

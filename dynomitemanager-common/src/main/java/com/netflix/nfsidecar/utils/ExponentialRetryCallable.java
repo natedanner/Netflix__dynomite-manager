@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 
 public abstract class ExponentialRetryCallable<T> extends RetryableCallable<T>
 {    
-    public final static long MAX_SLEEP = 240000;
-    public final static long MIN_SLEEP = 200;
+    public static final long MAX_SLEEP = 240000;
+    public static final long MIN_SLEEP = 200;
 
     private static final Logger logger = LoggerFactory.getLogger(RetryableCallable.class);
     private long max;

@@ -50,8 +50,8 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
     private static final String PROC_MEMINFO_PATH = "/proc/meminfo";
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("MemTotal:\\s*([0-9]*)");
 
-    private final String REDIS_START_SCRIPT = "/apps/nfredis/bin/launch_nfredis.sh";
-    private final String REDIS_STOP_SCRIPT = "/apps/nfredis/bin/kill_redis.sh";
+    private static final String REDIS_START_SCRIPT = "/apps/nfredis/bin/launch_nfredis.sh";
+    private static final String REDIS_STOP_SCRIPT = "/apps/nfredis/bin/kill_redis.sh";
 
     private static final String REDIS_CONF_MAXMEMORY_PATTERN = "^maxmemory\\s*[0-9][0-9]*[a-zA-Z]*";
     private static final String REDIS_CONF_APPENDONLY = "^appendonly\\s*[a-zA-Z]*";
@@ -69,7 +69,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
     public static final String JOB_TASK_NAME = "REDIS HEALTH TRACKER";
 
     private Jedis localJedis;
-    private boolean redisHealth = false;
+    private boolean redisHealth;
 
     private final FloridaConfig config;
 
@@ -135,7 +135,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
         while (!isDone) {
             try {
                 // only sync from one peer for now
-                isDone = (this.localJedis.slaveof(peer, port) != null);
+                isDone = this.localJedis.slaveof(peer, port) != null;
                 sleeper.sleepQuietly(1000);
             } catch (JedisConnectionException e) {
                 logger.warn("JedisConnection Exception in SLAVEOF peer " + peer + " port " + port + " Exception: "
@@ -169,7 +169,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
         while (!isDone) {
             logger.info("calling SLAVEOF NO ONE");
             try {
-                isDone = (this.localJedis.slaveofNoOne() != null);
+                isDone = this.localJedis.slaveofNoOne() != null;
                 sleeper.sleepQuietly(1000);
             } catch (JedisConnectionException e) {
                 logger.warn("JedisConnection Exception in SLAVEOF NO ONE: " + e.getMessage());
@@ -199,7 +199,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
     public boolean takeSnapshot() {
         localRedisConnect();
         try {
-            if (config.persistenceType().equals("aof")) {
+            if ("aof".equals(config.persistenceType())) {
                 logger.info("starting Redis BGREWRITEAOF");
                 this.localJedis.bgrewriteaof();
             } else {
@@ -216,7 +216,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
              */
         } catch (JedisDataException e) {
             String scheduled = null;
-            if (!config.persistenceType().equals("aof")) {
+            if (!"aof".equals(config.persistenceType())) {
                 scheduled = "ERR Background save already in progress";
             } else {
                 scheduled = "ERR Background append only file rewriting already in progress";
@@ -242,11 +242,11 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
                 String pendingPersistence = null;
 
                 for (String line : result) {
-                    if ((line.startsWith("aof_rewrite_in_progress") && config.persistenceType().equals("aof"))
-                            || (line.startsWith("rdb_bgsave_in_progress") && !config.persistenceType().equals("aof"))) {
+                    if ((line.startsWith("aof_rewrite_in_progress") && "aof".equals(config.persistenceType()))
+                            || (line.startsWith("rdb_bgsave_in_progress") && !"aof".equals(config.persistenceType()))) {
                         String[] items = line.split(":");
                         pendingPersistence = items[1].trim();
-                        if (pendingPersistence.equals("0")) {
+                        if ("0".equals(pendingPersistence)) {
                             logger.info("Redis: BGREWRITEAOF/BGSAVE completed.");
                             return true;
                         } else {
@@ -288,7 +288,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
                 if (line.startsWith("loading")) {
                     String[] items = line.split(":");
                     pendingAOF = items[1].trim();
-                    if (pendingAOF.equals("0")) {
+                    if ("0".equals(pendingAOF)) {
                         logger.info("Redis: memory loading completed.");
                         return true;
                     } else {
@@ -344,7 +344,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
             boolean found = false;
             while (iter.hasNext()) {
                 key = (String) iter.next();
-                if (key.equals("Redis_Server_uptime_in_seconds")) {
+                if ("Redis_Server_uptime_in_seconds".equals(key)) {
                     currentAlivePeer.upTime = allInfo.get(key);
                     found = true;
                     break;
@@ -503,7 +503,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
                 String[] items = line.split(":");
                 // logger.info(items[0] + ": " + items[1]);
                 role = items[1].trim();
-                if (role.equals("slave")) {
+                if ("slave".equals(role)) {
                     logger.info("Redis: Stop replication. Switch from slave to master");
                     stopPeerSync();
                 }
@@ -617,9 +617,9 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
                 Files.copy(confPath, backupPath, COPY_ATTRIBUTES);
             }
 
-            if (config.isPersistenceEnabled() && config.persistenceType().equals("aof")) {
+            if (config.isPersistenceEnabled() && "aof".equals(config.persistenceType())) {
                 logger.info("Persistence with AOF is enabled");
-            } else if (config.isPersistenceEnabled() && !config.persistenceType().equals("aof")) {
+            } else if (config.isPersistenceEnabled() && !"aof".equals(config.persistenceType())) {
                 logger.info("Persistence with RDB is enabled");
             }
 
@@ -690,7 +690,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
                         lines.set(i, zsetMaxZiplistValue);
                 }
                 // Persistence configuration
-                if (config.isPersistenceEnabled() && config.persistenceType().equals("aof")) {
+                if (config.isPersistenceEnabled() && "aof".equals(config.persistenceType())) {
                     if (line.matches(REDIS_CONF_APPENDONLY)) {
                         String appendOnly = "appendonly yes";
                         logger.info("Updating Redis property: " + appendOnly);
@@ -712,7 +712,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
                         logger.info("Updating Redis property: " + saveSchedule);
                         lines.set(i, saveSchedule);
                     }
-                } else if (config.isPersistenceEnabled() && !config.persistenceType().equals("aof")) {
+                } else if (config.isPersistenceEnabled() && !"aof".equals(config.persistenceType())) {
                     if (line.matches(REDIS_CONF_STOP_WRITES_BGSAVE_ERROR)) {
                         String bgsaveerror = "stop-writes-on-bgsave-error no";
                         logger.info("Updating Redis property: " + bgsaveerror);
@@ -757,7 +757,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
         // that we deal with.
         long totalMem = getTotalAvailableSystemMemory();
         long storeMaxMem = (totalMem * memPct) / 100;
-        storeMaxMem = ((totalMem - storeMaxMem) > GB_2_IN_KB) ? storeMaxMem : (totalMem - GB_2_IN_KB);
+        storeMaxMem = (totalMem - storeMaxMem) > GB_2_IN_KB ? storeMaxMem : (totalMem - GB_2_IN_KB);
 
         logger.info(String.format("totalMem: %s setting storage max mem to %s", totalMem, storeMaxMem));
         return storeMaxMem;
@@ -787,7 +787,7 @@ public class RedisStorageProxy extends Task implements StorageProxy, HealthIndic
             }
         }
 
-        String errMsg = String.format("Could not extract total mem using pattern %s from:\n%s ", MEMINFO_PATTERN,
+        String errMsg = String.format("Could not extract total mem using pattern %s from:%n%s ", MEMINFO_PATTERN,
                 memInfo);
         logger.error(errMsg);
         throw new RuntimeException(errMsg);

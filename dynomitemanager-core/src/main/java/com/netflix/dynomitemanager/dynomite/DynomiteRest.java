@@ -27,7 +27,7 @@ public class DynomiteRest {
         GetMethod get = new GetMethod(url);
         try {
             int statusCode = client.executeMethod(get);
-            if (!(statusCode == 200)) {
+            if (statusCode != 200) {
                 logger.error("Got non 200 status code from " + url);
                 return false;
             }

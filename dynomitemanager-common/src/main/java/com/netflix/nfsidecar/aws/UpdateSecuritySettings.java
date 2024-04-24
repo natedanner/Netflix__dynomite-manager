@@ -34,7 +34,7 @@ import com.netflix.nfsidecar.tokensdb.IAppsInstanceFactory;
 @Singleton
 public class UpdateSecuritySettings extends Task {
     public static final String JOBNAME = "Update_SG";
-    public static boolean firstTimeUpdated = false;
+    public static boolean firstTimeUpdated;
 
     private static final Random ran = new Random();
     private final IMembership membership;
@@ -62,10 +62,11 @@ public class UpdateSecuritySettings extends Task {
         List<String> add = Lists.newArrayList();
         for (AppsInstance instance : factory.getAllIds(envVariables.getDynomiteClusterName())) {
             String range = instance.getHostIP() + "/32";
-            if (!acls.contains(range))
+            if (!acls.contains(range)) {
                 add.add(range);
+            }
         }
-        if (add.size() > 0) {
+        if (!add.isEmpty()) {
             membership.addACL(add, port, port);
             firstTimeUpdated = true;
         }
@@ -80,9 +81,10 @@ public class UpdateSecuritySettings extends Task {
         // iterate to remove...
         List<String> remove = Lists.newArrayList();
         for (String acl : acls)
-            if (!currentRanges.contains(acl)) // if not found then remove....
+            if (!currentRanges.contains(acl)) { // if not found then remove....
                 remove.add(acl);
-        if (remove.size() > 0) {
+            }
+        if (!remove.isEmpty()) {
             membership.removeACL(remove, port, port);
             firstTimeUpdated = true;
         }
@@ -90,10 +92,11 @@ public class UpdateSecuritySettings extends Task {
 
     public static TaskTimer getTimer(InstanceIdentity id) {
         SimpleTimer return_;
-        if (id.isSeed())
+        if (id.isSeed()) {
             return_ = new SimpleTimer(JOBNAME, 120 * 1000 + ran.nextInt(120 * 1000));
-        else
+        } else {
             return_ = new SimpleTimer(JOBNAME);
+        }
         return return_;
     }
 

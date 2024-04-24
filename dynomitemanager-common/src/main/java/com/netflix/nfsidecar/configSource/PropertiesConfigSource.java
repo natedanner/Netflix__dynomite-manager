@@ -102,7 +102,9 @@ public class PropertiesConfigSource extends AbstractConfigSource
      */
     private void clone(final Properties properties) 
     {
-        if (properties.isEmpty()) return;
+        if (properties.isEmpty()) {
+            return;
+        }
 
         synchronized (properties) 
         {

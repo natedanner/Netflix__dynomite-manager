@@ -39,7 +39,7 @@ public class DynomiteProcessManager extends Task implements IDynomiteProcess, He
     private final Sleeper sleeper;
     private final IInstanceState instanceState;
     private final IDynomiteProcess dynProcess;
-    private boolean dynomiteHealth = false;
+    private boolean dynomiteHealth;
 
     @Inject
     public DynomiteProcessManager(FloridaConfig config, Sleeper sleeper, IInstanceState instanceState,
@@ -99,10 +99,11 @@ public class DynomiteProcessManager extends Task implements IDynomiteProcess, He
     }
 
     protected List<String> getStartCommand() {
-        List<String> startCmd = new LinkedList<String>();
+        List<String> startCmd = new LinkedList<>();
         for (String param : config.getDynomiteStartScript().split(" ")) {
-            if (StringUtils.isNotBlank(param))
+            if (StringUtils.isNotBlank(param)) {
                 startCmd.add(param);
+            }
         }
         return startCmd;
     }
@@ -122,8 +123,9 @@ public class DynomiteProcessManager extends Task implements IDynomiteProcess, He
         final byte[] buffer = new byte[512];
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(buffer.length);
         int cnt;
-        while ((cnt = inputStream.read(buffer)) != -1)
+        while ((cnt = inputStream.read(buffer)) != -1) {
             baos.write(buffer, 0, cnt);
+        }
         return baos.toString();
     }
 
@@ -136,8 +138,9 @@ public class DynomiteProcessManager extends Task implements IDynomiteProcess, He
             command.add("-E");
         }
         for (String param : config.getDynomiteStopScript().split(" ")) {
-            if (StringUtils.isNotBlank(param))
+            if (StringUtils.isNotBlank(param)) {
                 command.add(param);
+            }
         }
         ProcessBuilder stopDyno = new ProcessBuilder(command);
         stopDyno.directory(new File("/"));
@@ -168,7 +171,7 @@ public class DynomiteProcessManager extends Task implements IDynomiteProcess, He
      * @return true if Dynomite replies to PING with PONG, else false.
      */
     private boolean dynomiteRedisPing(Jedis dynomiteJedis) {
-        if (dynomiteJedis.ping().equals("PONG") == false) {
+        if (!"PONG".equals(dynomiteJedis.ping())) {
             logger.warn("Pinging Dynomite failed");
             return false;
         }

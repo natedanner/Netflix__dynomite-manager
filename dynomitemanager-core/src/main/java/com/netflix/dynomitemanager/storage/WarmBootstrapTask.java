@@ -163,7 +163,7 @@ public class WarmBootstrapTask extends Task {
 
 	logger.info("Warming up node's own token(s) : " + tokens);
 	List<AppsInstance> instances = appsInstanceFactory.getLocalDCIds(envVariables.getDynomiteClusterName(), envVariables.getRegion());
-	List<String> peers = new ArrayList<String>();
+	List<String> peers = new ArrayList<>();
 
 	for (AppsInstance ins : instances) {
 	    logger.info("Instance's token(s); " + ins.getToken());

@@ -84,13 +84,13 @@ public class SnapshotTask extends Task {
                     // the storage proxy takes a snapshot or compacts data
                     boolean snapshot = this.storageProxy.takeSnapshot();
                     File file = null;
-                    if (floridaConfig.persistenceType().equals("aof")) {
+                    if ("aof".equals(floridaConfig.persistenceType())) {
                         file = new File(floridaConfig.getPersistenceLocation() + "/appendonly.aof");
                     } else {
                         file = new File(floridaConfig.getPersistenceLocation() + "/nfredis.rdb");
                     }
                     // upload the data to S3
-                    if (file.length() > 0 && snapshot == true) {
+                    if (file.length() > 0 && snapshot) {
                         DateTime now = DateTime.now();
                         DateTime todayStart = now.withTimeAtStartOfDay();
                         this.state.setBackupTime(todayStart);
@@ -132,7 +132,7 @@ public class SnapshotTask extends Task {
      */
     public static TaskTimer getTimer(CommonConfig commonConfig) {
         int hour = commonConfig.getBackupHour();
-        if (commonConfig.getBackupSchedule().equals("week")) {
+        if ("week".equals(commonConfig.getBackupSchedule())) {
             return new CronTimer(DayOfWeek.MON, hour, 1, 0);
         }
         return new CronTimer(hour, 1, 0);

@@ -78,8 +78,9 @@ public class DynomiteStandardTuner implements ProcessTuner {
                 // r3.8xlarge: 244GB RAM (34.19GB available)
                 logger.info("Instance Type: " + instanceType + " ---> " + " Max Msgs: " + 1000000);
                 return 1000000;
-            } else
+            } else {
                 return 500000;
+            }
 
         }
         return floridaConfig.getDynomiteMaxAllocatedMessages();
@@ -103,10 +104,11 @@ public class DynomiteStandardTuner implements ProcessTuner {
         entries.put("distribution", floridaConfig.getDistribution());
         entries.put("dyn_listen", "0.0.0.0:" + commonConfig.getDynomitePeerPort());
 
-        if (commonConfig.isDynomiteStatsLocalHostOnly())
+        if (commonConfig.isDynomiteStatsLocalHostOnly()) {
             entries.put("stats_listen", "127.0.0.1:" + commonConfig.getDynomiteStatsPort());
-        else
+        } else {
             entries.put("stats_listen", "0.0.0.0:" + commonConfig.getDynomiteStatsPort());
+        }
         
         entries.put("dyn_seed_provider", floridaConfig.getDynomiteSeedProvider());
         entries.put("gos_interval", floridaConfig.getDynomiteGossipInterval());
@@ -141,14 +143,14 @@ public class DynomiteStandardTuner implements ProcessTuner {
 
         List<String> seedp = (List) entries.get("dyn_seeds");
         if (seedp == null) {
-            seedp = new ArrayList<String>();
+            seedp = new ArrayList<>();
             entries.put("dyn_seeds", seedp);
         } else {
             seedp.clear();
         }
 
         List<String> seeds = ii.getSeeds();
-        if (seeds.size() != 0) {
+        if (!seeds.isEmpty()) {
             for (String seed : seeds) {
                 seedp.add(seed);
             }
@@ -158,14 +160,14 @@ public class DynomiteStandardTuner implements ProcessTuner {
 
         List<String> servers = (List) entries.get("servers");
         if (servers == null) {
-            servers = new ArrayList<String>();
+            servers = new ArrayList<>();
             entries.put("servers", servers);
         } else {
             servers.clear();
         }
 
         entries.put("data_store", storageProxy.getEngineNumber());
-        if (!storageProxy.getUnixPath().equals("")) {
+        if (!"".equals(storageProxy.getUnixPath())) {
             servers.add(storageProxy.getUnixPath() + ":1");
         } else {
             servers.add(storageProxy.getIpAddress() + ":" + storageProxy.getPort() + ":1");

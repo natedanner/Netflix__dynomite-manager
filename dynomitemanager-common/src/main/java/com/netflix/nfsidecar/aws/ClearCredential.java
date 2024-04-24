@@ -38,8 +38,8 @@ public class ClearCredential implements ICredential {
     private static final Logger logger = LoggerFactory.getLogger(ClearCredential.class);
     private static final String CRED_FILE = "/etc/awscredential.properties";
     private final Properties props;
-    private final String AWS_ACCESS_ID;
-    private final String AWS_KEY;
+    private final String awsAccessId;
+    private final String awsKey;
 
     public ClearCredential() {
         FileInputStream fis = null;
@@ -47,8 +47,8 @@ public class ClearCredential implements ICredential {
             fis = new FileInputStream(CRED_FILE);
             props = new Properties();
             props.load(fis);
-            AWS_ACCESS_ID = props.getProperty("AWSACCESSID") != null ? props.getProperty("AWSACCESSID").trim() : "";
-            AWS_KEY = props.getProperty("AWSKEY") != null ? props.getProperty("AWSKEY").trim() : "";
+            awsAccessId = props.getProperty("AWSACCESSID") != null ? props.getProperty("AWSACCESSID").trim() : "";
+            awsKey = props.getProperty("AWSKEY") != null ? props.getProperty("AWSKEY").trim() : "";
         } catch (Exception e) {
             logger.error("Exception with credential file ", e);
             throw new RuntimeException("Problem reading credential file. Cannot start.", e);
@@ -63,11 +63,11 @@ public class ClearCredential implements ICredential {
     }
 
     public String getAccessKeyId() {
-        return AWS_ACCESS_ID;
+        return awsAccessId;
     }
 
     public String getSecretAccessKey() {
-        return AWS_KEY;
+        return awsKey;
     }
 
     public AWSCredentials getCredentials() {

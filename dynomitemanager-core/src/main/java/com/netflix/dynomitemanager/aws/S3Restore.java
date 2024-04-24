@@ -76,7 +76,7 @@ public class S3Restore implements Restore {
 
                 // Checking if the S3 bucket exists, and if does not, then we
                 // create it
-                if (!(s3Client.doesBucketExist(commonConfig.getBucketName()))) {
+                if (!s3Client.doesBucketExist(commonConfig.getBucketName())) {
                     logger.error("Bucket with name: " + commonConfig.getBucketName() + " does not exist");
                 } else {
                     S3Object s3object = s3Client.getObject(new GetObjectRequest(commonConfig.getBucketName(), keyName));
@@ -85,7 +85,7 @@ public class S3Restore implements Restore {
 
                     String filepath = null;
 
-                    if (floridaConfig.persistenceType().equals("aof")) {
+                    if ("aof".equals(floridaConfig.persistenceType())) {
                         filepath = floridaConfig.getPersistenceLocation() + "/appendonly.aof";
                     } else {
                         filepath = floridaConfig.getPersistenceLocation() + "/nfredis.rdb";

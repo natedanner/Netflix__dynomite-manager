@@ -67,7 +67,7 @@ public class EurekaHostSupplier implements HostSupplier {
                 LOG.debug("Fetching instance list for app: " + clusterName);
 
                 Application app = discoveryClient.getApplication(clusterName.toUpperCase());
-                List<Host> hosts = new ArrayList<Host>();
+                List<Host> hosts = new ArrayList<>();
 
                 if (app == null) {
                     LOG.warn("Cluster '{}' not found in Eureka", clusterName);

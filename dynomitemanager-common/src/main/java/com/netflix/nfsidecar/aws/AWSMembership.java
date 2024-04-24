@@ -82,17 +82,19 @@ public class AWSMembership implements IMembership {
             List<String> instanceIds = Lists.newArrayList();
             for (AutoScalingGroup asg : res.getAutoScalingGroups()) {
                 for (Instance ins : asg.getInstances())
-                    if (!(ins.getLifecycleState().equalsIgnoreCase("Terminating")
-                            || ins.getLifecycleState().equalsIgnoreCase("shutting-down")
-                            || ins.getLifecycleState().equalsIgnoreCase("Terminated")))
+                    if (!("Terminating".equalsIgnoreCase(ins.getLifecycleState())
+                            || "shutting-down".equalsIgnoreCase(ins.getLifecycleState())
+                            || "Terminated".equalsIgnoreCase(ins.getLifecycleState()))) {
                         instanceIds.add(ins.getInstanceId());
+                    }
             }
             logger.info(String.format("Querying Amazon returned following instance in the ASG: %s --> %s",
                     envVariables.getRack(), StringUtils.join(instanceIds, ",")));
             return instanceIds;
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -108,17 +110,19 @@ public class AWSMembership implements IMembership {
             List<String> instanceIds = Lists.newArrayList();
             for (AutoScalingGroup asg : res.getAutoScalingGroups()) {
                 for (Instance ins : asg.getInstances())
-                    if (!(ins.getLifecycleState().equalsIgnoreCase("Terminating")
-                            || ins.getLifecycleState().equalsIgnoreCase("shutting-down")
-                            || ins.getLifecycleState().equalsIgnoreCase("Terminated")))
+                    if (!("Terminating".equalsIgnoreCase(ins.getLifecycleState())
+                            || "shutting-down".equalsIgnoreCase(ins.getLifecycleState())
+                            || "Terminated".equalsIgnoreCase(ins.getLifecycleState()))) {
                         instanceIds.add(ins.getInstanceId());
+                    }
             }
             logger.info(String.format("Querying Amazon returned following instance in the cross-account ASG: %s --> %s",
                     envVariables.getRack(), StringUtils.join(instanceIds, ",")));
             return instanceIds;
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -140,8 +144,9 @@ public class AWSMembership implements IMembership {
             logger.info(String.format("Query on ASG returning %d instances", size));
             return size;
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -163,8 +168,9 @@ public class AWSMembership implements IMembership {
             logger.info(String.format("Query on cross account ASG returning %d instances", size));
             return size;
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -176,7 +182,7 @@ public class AWSMembership implements IMembership {
         AmazonEC2 client = null;
         try {
             client = getEc2Client();
-            List<IpPermission> ipPermissions = new ArrayList<IpPermission>();
+            List<IpPermission> ipPermissions = new ArrayList<>();
             ipPermissions.add(
                     new IpPermission().withFromPort(from).withIpProtocol("tcp").withIpRanges(listIPs).withToPort(to));
 
@@ -195,8 +201,9 @@ public class AWSMembership implements IMembership {
             }
 
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -226,8 +233,9 @@ public class AWSMembership implements IMembership {
                     envVariables.getDynomiteClusterName(), retriever.getVpcId()));
             return "";
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -238,7 +246,7 @@ public class AWSMembership implements IMembership {
         AmazonEC2 client = null;
         try {
             client = getEc2Client();
-            List<IpPermission> ipPermissions = new ArrayList<IpPermission>();
+            List<IpPermission> ipPermissions = new ArrayList<>();
             ipPermissions.add(
                     new IpPermission().withFromPort(from).withIpProtocol("tcp").withIpRanges(listIPs).withToPort(to));
 
@@ -259,8 +267,9 @@ public class AWSMembership implements IMembership {
             }
 
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -271,7 +280,7 @@ public class AWSMembership implements IMembership {
         AmazonEC2 client = null;
         try {
             client = getEc2Client();
-            List<String> ipPermissions = new ArrayList<String>();
+            List<String> ipPermissions = new ArrayList<>();
 
             Filter nameFilter = new Filter().withName("group-name").withValues(envVariables.getDynomiteClusterName());
             String vpcid = retriever.getVpcId();
@@ -284,15 +293,17 @@ public class AWSMembership implements IMembership {
             DescribeSecurityGroupsResult result = client.describeSecurityGroups(req);
             for (SecurityGroup group : result.getSecurityGroups())
                 for (IpPermission perm : group.getIpPermissions())
-                    if (perm.getFromPort() == from && perm.getToPort() == to)
+                    if (perm.getFromPort() == from && perm.getToPort() == to) {
                         ipPermissions.addAll(perm.getIpRanges());
+                    }
 
             logger.info("Fetch current permissions for vpc env of running instance");
 
             return ipPermissions;
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 
@@ -312,8 +323,9 @@ public class AWSMembership implements IMembership {
             ureq.setDesiredCapacity(asg.getMinSize() + 1);
             client.updateAutoScalingGroup(ureq);
         } finally {
-            if (client != null)
+            if (client != null) {
                 client.shutdown();
+            }
         }
     }
 

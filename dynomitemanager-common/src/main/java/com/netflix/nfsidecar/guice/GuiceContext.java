@@ -8,7 +8,7 @@ import com.google.inject.Injector;
 /**
  * A holder class around the Governator Guice {@code Injector}
  */
-public class GuiceContext {
+public final class GuiceContext {
     private static final Logger logger = LoggerFactory.getLogger(GuiceContext.class);
     private static final GuiceContext INSTANCE = new GuiceContext();
     private Injector injector;

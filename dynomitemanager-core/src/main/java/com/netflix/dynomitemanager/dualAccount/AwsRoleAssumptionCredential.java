@@ -10,10 +10,10 @@ import com.netflix.nfsidecar.identity.InstanceEnvIdentity;
 
 public class AwsRoleAssumptionCredential implements ICredential {
     private static final String AWS_ROLE_ASSUMPTION_SESSION_NAME = "AwsRoleAssumptionSession";
-    private ICredential cred;
-    private InstanceEnvIdentity insEnvIdentity;
+    private final ICredential cred;
+    private final InstanceEnvIdentity insEnvIdentity;
     private AWSCredentialsProvider stsSessionCredentialsProvider;
-    private AWSCommonConfig config;
+    private final AWSCommonConfig config;
 
     @Inject
     public AwsRoleAssumptionCredential(ICredential cred, AWSCommonConfig config, InstanceEnvIdentity insEnvIdentity) {
@@ -61,9 +61,10 @@ public class AwsRoleAssumptionCredential implements ICredential {
                     }
 
                     //
-                    if (roleArn == null || roleArn.isEmpty())
+                    if (roleArn == null || roleArn.isEmpty()) {
                         throw new NullPointerException(
                                 "Role ARN is null or empty probably due to missing config entry");
+                    }
 
                     /**
                      * Get handle to an implementation that uses AWS Security

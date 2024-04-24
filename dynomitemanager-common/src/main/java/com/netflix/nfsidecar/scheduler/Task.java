@@ -38,7 +38,7 @@ public abstract class Task implements Job, TaskMBean
 {
     public STATE status = STATE.DONE;
 
-    public static enum STATE
+    public enum STATE
     {
         ERROR, RUNNING, DONE
     }
@@ -85,8 +85,9 @@ public abstract class Task implements Job, TaskMBean
         executions.incrementAndGet();
         try
         {
-            if (status == STATE.RUNNING)
+            if (status == STATE.RUNNING) {
                 return;
+            }
             status = STATE.RUNNING;
             execute();
 
@@ -103,8 +104,9 @@ public abstract class Task implements Job, TaskMBean
             logger.error("Couldnt execute the task because of: " + e.getMessage(), e);
             errors.incrementAndGet();
         }
-        if (status != STATE.ERROR)
+        if (status != STATE.ERROR) {
             status = STATE.DONE;
+        }
     }
 
     public STATE state()

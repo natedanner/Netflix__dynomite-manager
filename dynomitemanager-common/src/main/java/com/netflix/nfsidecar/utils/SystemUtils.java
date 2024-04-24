@@ -56,8 +56,9 @@ public class SystemUtils
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             DataInputStream d = new DataInputStream((FilterInputStream) conn.getContent());
             int c = 0;
-            while ((c = d.read(b, 0, b.length)) != -1)
+            while ((c = d.read(b, 0, b.length)) != -1) {
                 bos.write(b, 0, c);
+            }
             String return_ = new String(bos.toByteArray(), Charsets.UTF_8);
             logger.info("Calling URL API: {} returns: {}", url, return_);
             conn.disconnect();
@@ -76,9 +77,9 @@ public class SystemUtils
      */
     public static void cleanupDir(String dirPath, List<String> childdirs) throws IOException
     {
-        if (childdirs == null || childdirs.size() == 0)
+        if (childdirs == null || childdirs.isEmpty()) {
             FileUtils.cleanDirectory(new File(dirPath));
-        else
+        } else
         {
             for (String cdir : childdirs)
                 FileUtils.cleanDirectory(new File(dirPath + "/" + cdir));

@@ -38,7 +38,7 @@ public class CassandraInstanceFactory implements IAppsInstanceFactory
     
     public List<AppsInstance> getAllIds(String appName)
     {
-        List<AppsInstance> return_ = new ArrayList<AppsInstance>();
+        List<AppsInstance> return_ = new ArrayList<>();
         for (AppsInstance instance : dao.getAllInstances(appName)) {
             return_.add(instance);
         }
@@ -49,7 +49,7 @@ public class CassandraInstanceFactory implements IAppsInstanceFactory
     
     public List<AppsInstance> getLocalDCIds(String appName, String region)
     {
-        List<AppsInstance> return_ = new ArrayList<AppsInstance>();
+        List<AppsInstance> return_ = new ArrayList<>();
         for (AppsInstance instance : dao.getLocalDCInstances(appName, region)) {
             return_.add(instance);
         }
@@ -77,7 +77,7 @@ public class CassandraInstanceFactory implements IAppsInstanceFactory
     public AppsInstance create(String app, int id, String instanceID, String hostname, int dynomitePort, int dynomiteSecurePort, int dynomiteSecureStoragePort, int peerPort, String ip, String zone, Map<String, Object> volumes, String payload, String rack)
     {
         try {
-            Map<String, Object> v = (volumes == null) ? new HashMap<String, Object>() : volumes;
+            Map<String, Object> v = volumes == null ? new HashMap<String, Object>() : volumes;
             AppsInstance ins = new AppsInstance();
             ins.setApp(app);
             ins.setZone(zone);

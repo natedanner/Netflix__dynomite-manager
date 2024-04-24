@@ -82,7 +82,7 @@ public class S3Backup implements Backup {
             // Checking if the S3 bucket exists, and if does not, then we create
             // it
 
-            if (!(s3Client.doesBucketExist(awsCommonConfig.getBucketName()))) {
+            if (!s3Client.doesBucketExist(awsCommonConfig.getBucketName())) {
                 logger.error("Bucket with name: " + awsCommonConfig.getBucketName() + " does not exist");
                 return false;
             } else {
@@ -90,7 +90,7 @@ public class S3Backup implements Backup {
                 // Create a list of UploadPartResponse objects. You get one of
                 // these for
                 // each part upload.
-                List<PartETag> partETags = new ArrayList<PartETag>();
+                List<PartETag> partETags = new ArrayList<>();
 
                 InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(awsCommonConfig.getBucketName(),
                         keyName);
